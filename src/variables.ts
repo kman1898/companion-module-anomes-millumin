@@ -19,6 +19,18 @@ function secondsToTimecode(totalSeconds: number): string {
 }
 
 /**
+ * Format seconds into HH:MM:SS with zero-padded hours.
+ * Matches upstream module's _HHMMSS variables for migration compatibility.
+ */
+function secondsToHHMMSS(totalSeconds: number): string {
+	if (isNaN(totalSeconds) || totalSeconds < 0) return '00:00:00'
+	const h = Math.floor(totalSeconds / 3600)
+	const m = Math.floor((totalSeconds % 3600) / 60)
+	const s = Math.floor(totalSeconds % 60)
+	return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`
+}
+
+/**
  * Sanitize a layer name for use as a variable ID.
  * Replaces spaces with underscores so variable IDs are valid.
  */
@@ -49,6 +61,11 @@ export function updateVariables(instance: InstanceBaseExt<MilluminConfig>): void
 		variables[`media_${safeName}_duration_tc`] = secondsToTimecode(mediaLayer.duration)
 		variables[`media_${safeName}_remaining_tc`] = secondsToTimecode(remaining)
 
+		// HH:MM:SS format (upstream compatibility — matches PR #31)
+		variables[`media_${safeName}_elapsedTime_HHMMSS`] = secondsToHHMMSS(mediaLayer.elapsedTime)
+		variables[`media_${safeName}_duration_HHMMSS`] = secondsToHHMMSS(mediaLayer.duration)
+		variables[`media_${safeName}_remainingTime_HHMMSS`] = secondsToHHMMSS(remaining)
+
 		// Remaining as rounded integer seconds
 		variables[`media_${safeName}_remaining_seconds`] = Math.round(remaining).toString()
 	}
@@ -74,6 +91,10 @@ export function initVariables(instance: InstanceBaseExt<MilluminConfig>): void {
 		globalSettings.add({ name: `${mediaLayerName} / Elapsed (MM:SS)`, variableId: `media_${safeName}_elapsed_tc` })
 		globalSettings.add({ name: `${mediaLayerName} / Duration (MM:SS)`, variableId: `media_${safeName}_duration_tc` })
 		globalSettings.add({ name: `${mediaLayerName} / Remaining (MM:SS)`, variableId: `media_${safeName}_remaining_tc` })
+		// HH:MM:SS (upstream compatibility)
+		globalSettings.add({ name: `${mediaLayerName} / Elapsed (HH:MM:SS)`, variableId: `media_${safeName}_elapsedTime_HHMMSS` })
+		globalSettings.add({ name: `${mediaLayerName} / Duration (HH:MM:SS)`, variableId: `media_${safeName}_duration_HHMMSS` })
+		globalSettings.add({ name: `${mediaLayerName} / Remaining (HH:MM:SS)`, variableId: `media_${safeName}_remainingTime_HHMMSS` })
 		// Remaining integer seconds
 		globalSettings.add({ name: `${mediaLayerName} / Remaining (seconds)`, variableId: `media_${safeName}_remaining_seconds` })
 	}
