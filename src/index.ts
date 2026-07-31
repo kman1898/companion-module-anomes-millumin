@@ -11,6 +11,19 @@ import { InstanceBaseExt, MilluminTypes, MediaLayer } from './utils.js'
 // API 2.0: export upgrade scripts as named export
 export const UpgradeScripts = [UpgradeV2ToV3]
 
+/**
+ * Resolve a column display name.
+ * Millumin only sends the name over OSC if the column has been user-renamed;
+ * default columns arrive without a name. Fall back to "Column N" so users
+ * always see something meaningful in Companion.
+ */
+function resolveColumnName(rawName: unknown, index: number): string {
+	const name = rawName != null ? String(rawName).trim() : ''
+	if (name !== '') return name
+	if (Number.isFinite(index) && index > 0) return `Column ${index}`
+	return ''
+}
+
 // API 2.0: export default, InstanceBase generic is now MilluminTypes
 export default class MilluminInstance extends InstanceBase<MilluminTypes> implements InstanceBaseExt {
 	public config: MilluminConfig = {
@@ -135,11 +148,7 @@ export default class MilluminInstance extends InstanceBase<MilluminTypes> implem
 	public receiveOSCResponse(data: OSCResponse): void {
 		if (data.address.toString() == '/millumin/board/launchedColumn' && 0 < data.args.length) {
 			this.currentColumnIndex = Number(data.args[0].value)
-			if (1 < data.args.length) {
-				this.currentColumnName = String(data.args[1].value)
-			} else {
-				this.currentColumnName = ''
-			}
+			this.currentColumnName = resolveColumnName(data.args[1]?.value, this.currentColumnIndex)
 			for (const key in this.mediaLayers) {
 				this.mediaLayers[key].elapsedTime = 0
 			}
@@ -157,8 +166,9 @@ export default class MilluminInstance extends InstanceBase<MilluminTypes> implem
 			6 <= data.args.length &&
 			data.args[0].value == 'board/launchedColumn'
 		) {
-			this.previousColumnName = String(data.args[2].value)
-			this.nextColumnName = String(data.args[4].value)
+			// /millumin/info for board/launchedColumn: [topic, prevIndex, prevName, nextIndex, nextName, ...]
+			this.previousColumnName = resolveColumnName(data.args[2].value, Number(data.args[1].value))
+			this.nextColumnName = resolveColumnName(data.args[4].value, Number(data.args[3].value))
 			this.updateVariablesValues()
 		} else if (data.address.startsWith('/millumin/index:1/media')) {
 			this.updateMediaLayer(data.address, 'firstByIndex', data.args)
