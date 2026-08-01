@@ -27,6 +27,7 @@ export function getFeedbacks(instance: InstanceBaseExt): CompanionFeedbackDefini
 			type: 'advanced',
 			name: 'Media on Layer / Progress Bar',
 			description: 'Show a progress bar of media currently playing on layer. Green → Orange (≤30s) → Red (≤10s)',
+			affectedProperties: ['imageBuffer'],
 			options: [
 				{
 					id: 'layer',

@@ -152,8 +152,10 @@ export interface MediaLayer {
 }
 
 // API 2.0: InstanceBase takes InstanceTypes, not just config
+// API 2.1: InstanceTypes gained a `secrets` slot — declare it as undefined since we don't use it
 export interface MilluminTypes extends InstanceTypes {
 	config: MilluminConfig
+	secrets: undefined
 }
 
 export interface InstanceBaseExt extends InstanceBase<MilluminTypes> {
